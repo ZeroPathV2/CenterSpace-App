@@ -5,10 +5,16 @@ dotenv.config();
 import express from "express";
 import session from "express-session";
 import { AppDataSource } from "./ormconfig";
+
 import twitchRouter from "./routes/twitch";
+
 import youtubeRouter from "./routes/youtube";
 import authRouter from './routes/auth'
+
+import playlistRoute from './routes/playlist'
+
 import cors from "cors"
+// import { requireAuth } from "./middleware/requireAuth";
 
 const app = express();
 app.use(express.json());
@@ -32,12 +38,16 @@ app.use(
   })
 );
 
+app.use("/playlist", playlistRoute)
+
 app.use("/twitch", twitchRouter);
+
 app.use("/youtube", youtubeRouter);
+
 app.use("/auth", authRouter)
 
 app.get("/", (_req, res) => {
-    res.send("Backend is running.")
+    res.send(`Backend is running.`)
 })
 
 const PORT = process.env.PORT || 4000;

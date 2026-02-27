@@ -6,6 +6,7 @@ const Page = () => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const router = useRouter()
+  const [error, setError] = useState(false)
   // const [query, setQuery] = useState("")
 
   const handleSubmit: React.SubmitEventHandler<HTMLFormElement> = async (e) => {
@@ -21,12 +22,13 @@ const Page = () => {
 
     if (!res.ok) throw new Error("Invalid credentials")
 
+    router.push("/")
+    
     setEmail("")
     setPassword("")
 
-    router.push("/login")
-
   } catch (error) {
+    setError(true)
     console.error(error);
   }
 }
@@ -39,7 +41,10 @@ const Page = () => {
       <div className=" w-full flex flex-col justify-center items-center">
 
         <form onSubmit={handleSubmit} className="flex flex-col bg-indigo-500 p-6 rounded-lg gap-4 w-80">
-          <h1 className="text-white text-xl text-center">Register</h1>
+          <h1 className="text-white text-xl text-center">Create an Account</h1>
+          
+          {error? <p className='flex text-red-600 p-0 m-0 self-center'> Invalid credentials.</p> : null}
+          
           <label className="flex flex-col text-white">
             Email:
             <input 

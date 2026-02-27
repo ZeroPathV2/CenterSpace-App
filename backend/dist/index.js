@@ -12,7 +12,9 @@ const ormconfig_1 = require("./ormconfig");
 const twitch_1 = __importDefault(require("./routes/twitch"));
 const youtube_1 = __importDefault(require("./routes/youtube"));
 const auth_1 = __importDefault(require("./routes/auth"));
+const playlist_1 = __importDefault(require("./routes/playlist"));
 const cors_1 = __importDefault(require("cors"));
+// import { requireAuth } from "./middleware/requireAuth";
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use((0, cors_1.default)({
@@ -30,11 +32,12 @@ app.use((0, express_session_1.default)({
         sameSite: "lax"
     }
 }));
+app.use("/playlist", playlist_1.default);
 app.use("/twitch", twitch_1.default);
 app.use("/youtube", youtube_1.default);
 app.use("/auth", auth_1.default);
 app.get("/", (_req, res) => {
-    res.send("Backend is running.");
+    res.send(`Backend is running.`);
 });
 const PORT = process.env.PORT || 4000;
 ormconfig_1.AppDataSource.initialize()

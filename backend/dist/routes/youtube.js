@@ -7,7 +7,7 @@ const { YOUTUBE_API_KEY } = process.env;
 if (!YOUTUBE_API_KEY)
     throw new Error("Missing YOUTUBE_API_KEY");
 router.get("/search", requireAuth_1.requireAuth, async (req, res) => {
-    var _a, _b;
+    var _a;
     try {
         const channel = (_a = req.query.channel) === null || _a === void 0 ? void 0 : _a.trim();
         if (!channel)
@@ -24,19 +24,14 @@ router.get("/search", requireAuth_1.requireAuth, async (req, res) => {
         if (!channelData.items || channelData.items.length === 0)
             return res.status(404).json({ error: "Channel not found" });
         const uploadsPlaylistId = channelData.items[0].contentDetails.relatedPlaylists.uploads;
-        // Step 3: Get videos from playlist (just first video if you want one)
-        const playlistRes = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=1&playlistId=${uploadsPlaylistId}&key=${YOUTUBE_API_KEY}`);
-        const playlistData = await playlistRes.json();
-        const videos = (_b = playlistData.items) === null || _b === void 0 ? void 0 : _b.map((v) => ({
-            videoId: v.contentDetails.videoId,
-            title: v.snippet.title,
-            embedUrl: `https://www.youtube.com/embed/${v.contentDetails.videoId}`,
-        }));
-        if (!videos || videos.length === 0)
-            return res.status(404).json({ error: "No videos found" });
         res.json({
-            platform: "youtube",
-            videos,
+            videos: [
+                {
+                    videoId: uploadsPlaylistId, // use playlist id
+                    title: `${channel} uploads`,
+                    embedUrl: `https://www.youtube.com/embed?list=${uploadsPlaylistId}&autoplay=1&index=0`,
+                },
+            ],
         });
     }
     catch (error) {

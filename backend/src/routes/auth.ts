@@ -14,6 +14,8 @@ router.post("/register", async (req, res) => {
     if (!email || !password)
       return res.status(400).json({ error: "Missing fields" });
 
+    // email = email.trim();
+
     const existingUser = await userRepo.findOne({ where: { email } });
     if (existingUser)
       return res.status(400).json({ error: "User already exists" });

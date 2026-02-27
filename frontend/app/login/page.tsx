@@ -69,7 +69,7 @@ const Page = () => {
 
           <div className=' flex w-full p-1 gap-1'>
           <button type='submit' className="w-full bg-white text-black py-2 rounded">
-            Submit
+            Login
           </button>
           
           <button type='button' onClick={() => router.push('/register')} className="w-full bg-white text-black py-2 rounded">

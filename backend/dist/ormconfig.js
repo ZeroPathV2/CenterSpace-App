@@ -5,6 +5,7 @@ require("reflect-metadata");
 const typeorm_1 = require("typeorm");
 const User_1 = require("./entities/User");
 const OAuthToken_1 = require("./entities/OAuthToken");
+const PlaylistVideo_1 = require("./entities/PlaylistVideo");
 exports.AppDataSource = new typeorm_1.DataSource({
     type: "postgres",
     host: process.env.DB_HOST,
@@ -14,5 +15,5 @@ exports.AppDataSource = new typeorm_1.DataSource({
     database: process.env.DB_NAME,
     synchronize: true, // auto-create tables (dev only)
     logging: false,
-    entities: [User_1.User, OAuthToken_1.OAuthToken],
+    entities: [User_1.User, OAuthToken_1.OAuthToken, PlaylistVideo_1.PlaylistVideo],
 });

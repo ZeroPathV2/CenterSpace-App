@@ -1,11 +1,60 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const express_1 = require("express");
 const ormconfig_1 = require("../ormconfig");
 const OAuthToken_1 = require("../entities/OAuthToken");
 const OAuthProvider_1 = require("../entities/OAuthProvider");
 const requireAuth_1 = require("../middleware/requireAuth");
 const router = (0, express_1.Router)();
+// const {TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_REDIRECT_URI} = process.env
+router.get("/connect", requireAuth_1.requireAuth, (req, res) => {
+    const twitchAuthUrl = `https://id.twitch.tv/oauth2/authorize?` +
+        `client_id=${process.env.TWITCH_CLIENT_ID}` +
+        `&redirect_uri=${encodeURIComponent(process.env.TWITCH_REDIRECT_URI)}` +
+        `&response_type=code` +
+        `&scope=user:read:email`;
+    res.json({ url: twitchAuthUrl });
+});
+router.get("/callback", requireAuth_1.requireAuth, async (req, res) => {
+    try {
+        const { code } = req.query;
+        const userId = req.session.userId;
+        if (!code || !userId) {
+            return res.status(400).json({ error: "Invalid request" });
+        }
+        const tokenRes = await fetch("https://id.twitch.tv/oauth2/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+                client_id: process.env.TWITCH_CLIENT_ID,
+                client_secret: process.env.TWITCH_CLIENT_SECRET,
+                code: code,
+                grant_type: "authorization_code",
+                redirect_uri: process.env.TWITCH_REDIRECT_URI,
+            }),
+        });
+        const tokenData = await tokenRes.json();
+        if (!tokenData.access_token) {
+            return res.status(400).json(tokenData);
+        }
+        const tokenRepo = ormconfig_1.AppDataSource.getRepository(OAuthToken_1.OAuthToken);
+        await tokenRepo.save({
+            user: { id: userId },
+            provider: OAuthProvider_1.OAuthProvider.TWITCH,
+            accessToken: tokenData.access_token,
+        });
+        res.redirect("http://localhost:3000");
+    }
+    catch (err) {
+        console.error("Callback error:", err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
 router.get("/search", requireAuth_1.requireAuth, async (req, res) => {
     var _a, _b, _c, _d, _e;
     try {
@@ -66,14 +115,13 @@ router.get("/search", requireAuth_1.requireAuth, async (req, res) => {
         if (!vod)
             return res.status(404).json({ error: "No videos found" });
         return res.json({
-            platform: "twitch",
             videos: [
                 {
                     videoId: vod.id,
                     title: vod.title,
                     embedUrl: `https://player.twitch.tv/?video=${vod.id}&parent=localhost`,
                 },
-            ],
+            ]
         });
     }
     catch (error) {

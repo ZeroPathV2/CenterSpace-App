@@ -9,33 +9,32 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.User = void 0;
+exports.PlaylistVideo = void 0;
 const typeorm_1 = require("typeorm");
-const OAuthToken_1 = require("./OAuthToken");
-const PlaylistVideo_1 = require("./PlaylistVideo");
-let User = class User {
+const User_1 = require("./User");
+let PlaylistVideo = class PlaylistVideo {
 };
-exports.User = User;
+exports.PlaylistVideo = PlaylistVideo;
 __decorate([
     (0, typeorm_1.PrimaryGeneratedColumn)(),
     __metadata("design:type", Number)
-], User.prototype, "id", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ unique: true }),
-    __metadata("design:type", String)
-], User.prototype, "email", void 0);
+], PlaylistVideo.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], User.prototype, "password", void 0);
+], PlaylistVideo.prototype, "videoId", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => OAuthToken_1.OAuthToken, (token) => token.user),
-    __metadata("design:type", Array)
-], User.prototype, "tokens", void 0);
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], PlaylistVideo.prototype, "title", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => PlaylistVideo_1.PlaylistVideo, video => video.user),
-    __metadata("design:type", Array)
-], User.prototype, "playlist", void 0);
-exports.User = User = __decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], PlaylistVideo.prototype, "embedUrl", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => User_1.User, user => user.playlist, { onDelete: "CASCADE" }),
+    __metadata("design:type", User_1.User)
+], PlaylistVideo.prototype, "user", void 0);
+exports.PlaylistVideo = PlaylistVideo = __decorate([
     (0, typeorm_1.Entity)()
-], User);
+], PlaylistVideo);
