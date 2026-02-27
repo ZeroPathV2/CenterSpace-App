@@ -6,8 +6,8 @@ services:
     container_name: postgres-db
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: centerspace_db
     ports:
       - "5432:5432"
