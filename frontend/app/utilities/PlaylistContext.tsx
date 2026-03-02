@@ -2,10 +2,11 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
 interface Video {
-  id: number
-  videoId: string;
+  platform: string;
+  playlistItemId: string;
   title: string;
   embedUrl: string;
+  id: number; // optional for DB items
 }
 
 interface PlaylistContextType {
@@ -26,7 +27,7 @@ export const PlaylistProvider = ({ children }: { children: React.ReactNode }) =>
       credentials: "include",
     })
       .then(res => res.json())
-      .then(data => setPlaylist(data.videos ?? []))
+      .then(data => setPlaylist(data ?? []))
       .catch(() => {});
   }, []);
 
@@ -38,10 +39,16 @@ export const PlaylistProvider = ({ children }: { children: React.ReactNode }) =>
       body: JSON.stringify(video),
     });
 
+    if(!res.ok){
+      const text = await res.text()
+      console.error("Failed to add video.",text);
+
+    }
+
     const saved = await res.json();
 
     setPlaylist(prev => {
-      const exists = prev.some(v => v.videoId === saved.videoId);
+      const exists = prev.some(v => v.playlistItemId === saved.playlistItemId && v.platform === saved.platform);
       if (exists) return prev;
       return [...prev, saved];
     });

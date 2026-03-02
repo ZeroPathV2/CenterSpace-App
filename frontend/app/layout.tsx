@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { PlaylistProvider } from "./utilities/PlaylistContext";
+import { UserProvider } from "./utilities/UserContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +28,9 @@ export default function RootLayout({
     <html lang="en">
       <body className=''>
         <PlaylistProvider>
-          {children}
+          <UserProvider>
+            {children}
+          </UserProvider>
 
         </PlaylistProvider>
       </body>

@@ -4,18 +4,18 @@ import { AppDataSource } from "../ormconfig";
 import { User } from "../entities/User";
 
 const router = Router();
-const userRepo = AppDataSource.getRepository(User);
 
 // REGISTER
 router.post("/register", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
 
     if (!email || !password)
       return res.status(400).json({ error: "Missing fields" });
 
-    // email = email.trim();
-
+    email = email.trim();
+    
+    const userRepo = AppDataSource.getRepository(User);
     const existingUser = await userRepo.findOne({ where: { email } });
     if (existingUser)
       return res.status(400).json({ error: "User already exists" });
@@ -42,8 +42,9 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-
+    const userRepo = AppDataSource.getRepository(User);
     const user = await userRepo.findOne({ where: { email } });
+
     if (!user)
       return res.status(400).json({ error: "Invalid credentials" });
 
@@ -52,9 +53,9 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Invalid credentials" });
 
     req.session.userId = user.id;
-
     res.json({ message: "Logged in", userId: user.id });
-  } catch (error) {
+  } 
+  catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -74,6 +75,7 @@ router.get("/me", async (req, res) => {
   if (!req.session.userId)
     return res.status(401).json({ error: "Not logged in" });
 
+  const userRepo = AppDataSource.getRepository(User);
   const user = await userRepo.findOne({
     where: { id: req.session.userId },
   });

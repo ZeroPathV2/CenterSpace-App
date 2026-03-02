@@ -1,8 +1,9 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
-import { User } from "./entities/User";
-import { OAuthToken } from "./entities/OAuthToken";
-import { PlaylistVideo } from "./entities/PlaylistVideo";
+// import { User } from "./entities/User";
+// import { OAuthToken } from "./entities/OAuthToken";
+// import { PlaylistItem } from "./entities/PlaylistItem";
+// import { Creator } from "./entities/Creator";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -13,5 +14,5 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   synchronize: true, // auto-create tables (dev only)
   logging: false,
-  entities: [User, OAuthToken, PlaylistVideo],
+  entities: [__dirname + "/entities/*.{ts,js}"],
 });

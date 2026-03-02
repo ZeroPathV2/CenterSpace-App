@@ -3,9 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppDataSource = void 0;
 require("reflect-metadata");
 const typeorm_1 = require("typeorm");
-const User_1 = require("./entities/User");
-const OAuthToken_1 = require("./entities/OAuthToken");
-const PlaylistVideo_1 = require("./entities/PlaylistVideo");
+// import { User } from "./entities/User";
+// import { OAuthToken } from "./entities/OAuthToken";
+// import { PlaylistItem } from "./entities/PlaylistItem";
+// import { Creator } from "./entities/Creator";
 exports.AppDataSource = new typeorm_1.DataSource({
     type: "postgres",
     host: process.env.DB_HOST,
@@ -15,5 +16,5 @@ exports.AppDataSource = new typeorm_1.DataSource({
     database: process.env.DB_NAME,
     synchronize: true, // auto-create tables (dev only)
     logging: false,
-    entities: [User_1.User, OAuthToken_1.OAuthToken, PlaylistVideo_1.PlaylistVideo],
+    entities: [__dirname + "/entities/*.{ts,js}"],
 });

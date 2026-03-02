@@ -12,7 +12,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.User = void 0;
 const typeorm_1 = require("typeorm");
 const OAuthToken_1 = require("./OAuthToken");
-const PlaylistVideo_1 = require("./PlaylistVideo");
+const PlaylistItem_1 = require("./PlaylistItem");
+const Creator_1 = require("./Creator");
 let User = class User {
 };
 exports.User = User;
@@ -33,9 +34,13 @@ __decorate([
     __metadata("design:type", Array)
 ], User.prototype, "tokens", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => PlaylistVideo_1.PlaylistVideo, video => video.user),
+    (0, typeorm_1.OneToMany)(() => PlaylistItem_1.PlaylistItem, item => item.user),
     __metadata("design:type", Array)
 ], User.prototype, "playlist", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => Creator_1.Creator, creator => creator.user),
+    __metadata("design:type", Array)
+], User.prototype, "creators", void 0);
 exports.User = User = __decorate([
     (0, typeorm_1.Entity)()
 ], User);

@@ -8,29 +8,41 @@ const SearchBar = () => {
   const [platform, setPlatform] = useState<"twitch" | "youtube">("twitch")
 
   const searchQuery = async (e: React.SubmitEvent<HTMLFormElement>) => {
-    e.preventDefault()
+    e.preventDefault();
 
     try {
-      const res = await fetch(
-        `http://localhost:4000/${platform}/search?channel=${query}`,{
-          method: "GET",
-          credentials: "include",
-        })
+      const res = await fetch(`http://localhost:4000/${platform}/search?channel=${query}`, {
+        method: "GET",
+        credentials: "include",
+      });
 
-      if (!res.ok) throw new Error("Search Failed")
+      console.log(`Request: http://localhost:4000/${platform}/search?channel=${query}`);
+      
 
-      const data = await res.json()
-      addVideo(data.videos[0])
-      setQuery("")
+      if (!res.ok) {
+        const errText = await res.text()
+        throw new Error(`Search Faild: ${errText}` || "Search failed")
+      }
 
-    } catch (error) {
-      console.error(error)
+      const data = await res.json();
+      console.log("Data:",data);
+      
+      if (!data.videos?.length) throw new Error("No videos found");
+
+      addVideo(data.videos[0]);
+      setQuery("");
+    } 
+    catch (error) {
+      alert(error.message || `Please sign in to ${platform}.`);
+      console.error(error);
     }
   }
 
   return (
-    <div>
+    <div className="bg-black flex p-2 gap-2 justify-center items-center rounded-full">
+
       <button
+        className="bg-white text-red-500 rounded"
         onClick={() =>setPlatform(prev => prev === "twitch" ? "youtube" : "twitch")}> {platform}
       </button>
 
@@ -40,6 +52,7 @@ const SearchBar = () => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search"
+          className="w-96"
         />
       </form>
     </div>

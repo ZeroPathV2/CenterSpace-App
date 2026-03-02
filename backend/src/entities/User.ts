@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable } from "typeorm";
 import { OAuthToken } from "./OAuthToken";
-import { PlaylistVideo } from "./PlaylistVideo";
+import { PlaylistItem } from "./PlaylistItem";
+import { Creator } from "./Creator";
 
 @Entity()
 export class User {
@@ -16,6 +17,9 @@ export class User {
   @OneToMany(() => OAuthToken, (token) => token.user)
   tokens!: OAuthToken[];
 
-  @OneToMany(() => PlaylistVideo, video => video.user)
-  playlist!: PlaylistVideo[]
+  @OneToMany(() => PlaylistItem, item => item.user)
+  playlist!: PlaylistItem[]
+
+  @OneToMany(() => Creator, creator => creator.user)
+  creators!: Creator[];
 }
