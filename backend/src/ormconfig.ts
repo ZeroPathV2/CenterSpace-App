@@ -1,9 +1,7 @@
 import "reflect-metadata";
+import dotenv from "dotenv";
+dotenv.config();
 import { DataSource } from "typeorm";
-// import { User } from "./entities/User";
-// import { OAuthToken } from "./entities/OAuthToken";
-// import { PlaylistItem } from "./entities/PlaylistItem";
-// import { Creator } from "./entities/Creator";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -12,7 +10,8 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  synchronize: true, // auto-create tables (dev only)
+  synchronize: false,
   logging: false,
   entities: [__dirname + "/entities/*.{ts,js}"],
+  migrations: [__dirname + "/migrations/*.{ts,js}"],
 });

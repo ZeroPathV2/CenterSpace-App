@@ -6,11 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const ormconfig_1 = require("../ormconfig");
 const PlaylistItem_1 = require("../entities/PlaylistItem");
-const requireUser_1 = require("../middleware/requireUser");
+const auth_1 = require("../middleware/auth");
 const asyncHandler_1 = __importDefault(require("../utils/asyncHandler"));
 const router = (0, express_1.Router)();
-router.post("/", requireUser_1.requireUser, (0, asyncHandler_1.default)(async (req, res) => {
-    const userId = req.session.userId;
+router.post("/", auth_1.requireUser, (0, asyncHandler_1.default)(async (req, res) => {
+    const userId = req.user.id;
     const { platform, playlistItemId, title, embedUrl } = req.body;
     const repo = ormconfig_1.AppDataSource.getRepository(PlaylistItem_1.PlaylistItem);
     // prevent duplicates
@@ -29,8 +29,8 @@ router.post("/", requireUser_1.requireUser, (0, asyncHandler_1.default)(async (r
     await repo.save(item);
     res.json(item);
 }));
-router.get("/", requireUser_1.requireUser, (0, asyncHandler_1.default)(async (req, res) => {
-    const userId = req.session.userId;
+router.get("/", auth_1.requireUser, (0, asyncHandler_1.default)(async (req, res) => {
+    const userId = req.user.id;
     const repo = ormconfig_1.AppDataSource.getRepository(PlaylistItem_1.PlaylistItem);
     const item = await repo.find({
         // order: { position: "ASC" },
@@ -39,7 +39,7 @@ router.get("/", requireUser_1.requireUser, (0, asyncHandler_1.default)(async (re
     res.json(item);
 }));
 // CHANGE - what are "transactional updates"
-router.put("/reorder", requireUser_1.requireUser, (0, asyncHandler_1.default)(async (req, res) => {
+router.put("/reorder", auth_1.requireUser, (0, asyncHandler_1.default)(async (req, res) => {
     const { items } = req.body;
     const repo = ormconfig_1.AppDataSource.getRepository(PlaylistItem_1.PlaylistItem);
     for (const item of items) {
@@ -48,8 +48,8 @@ router.put("/reorder", requireUser_1.requireUser, (0, asyncHandler_1.default)(as
     res.json({ success: true });
 }));
 // DELETE SINGLE VIA ID /playlist/:id
-router.delete("/:id", requireUser_1.requireUser, (0, asyncHandler_1.default)(async (req, res) => {
-    const userId = req.session.userId;
+router.delete("/:id", auth_1.requireUser, (0, asyncHandler_1.default)(async (req, res) => {
+    const userId = req.user.id;
     const itemId = Number(req.params.id);
     const repo = ormconfig_1.AppDataSource.getRepository(PlaylistItem_1.PlaylistItem);
     // Only delete if the item belongs to this user
@@ -59,8 +59,8 @@ router.delete("/:id", requireUser_1.requireUser, (0, asyncHandler_1.default)(asy
     res.json({ message: "Item removed" });
 }));
 // CLEAR ALL
-router.delete("/", requireUser_1.requireUser, (0, asyncHandler_1.default)(async (req, res) => {
-    const userId = req.session.userId;
+router.delete("/", auth_1.requireUser, (0, asyncHandler_1.default)(async (req, res) => {
+    const userId = req.user.id;
     const repo = ormconfig_1.AppDataSource.getRepository(PlaylistItem_1.PlaylistItem);
     await repo.delete({ user: { id: userId } });
     res.json({ message: "Playlist cleared" });

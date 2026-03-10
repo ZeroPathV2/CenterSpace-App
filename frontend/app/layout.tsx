@@ -1,18 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { PlaylistProvider } from "./utilities/PlaylistContext";
 import { UserProvider } from "./utilities/UserContext";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -27,12 +16,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className=''>
-        <PlaylistProvider>
-          <UserProvider>
-            {children}
-          </UserProvider>
+        <UserProvider>
+          <PlaylistProvider>
+              {children}
 
-        </PlaylistProvider>
+          </PlaylistProvider>
+        </UserProvider>
       </body>
     </html>
   );

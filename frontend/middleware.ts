@@ -2,18 +2,19 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  const sessionCookie = request.cookies.get('connect.sid')?.value
-
+  const token = request.cookies.get('token')?.value
   const { pathname } = request.nextUrl
   const isAuthPage = pathname === '/login' || pathname === '/register'
 
-  // If no session → block everything except login/register
-  if (!sessionCookie && !isAuthPage) {
+  const isLoggedIn = !!token // just check if the cookie exists
+
+  // Block non-authenticated users from protected pages
+  if (!isLoggedIn && !isAuthPage) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // If logged in → prevent access to login/register
-  if (sessionCookie && isAuthPage) {
+  // Prevent logged-in users from accessing login/register
+  if (isLoggedIn && isAuthPage) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 

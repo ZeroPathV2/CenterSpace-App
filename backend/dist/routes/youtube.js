@@ -4,15 +4,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const requireUser_1 = require("../middleware/requireUser");
+const auth_1 = require("../middleware/auth");
 const asyncHandler_1 = __importDefault(require("../utils/asyncHandler"));
 const router = (0, express_1.Router)();
 const { YOUTUBE_API_KEY } = process.env;
 if (!YOUTUBE_API_KEY)
     throw new Error("Missing YOUTUBE_API_KEY");
-router.get("/search", requireUser_1.requireUser, (0, asyncHandler_1.default)(async (req, res) => {
-    var _a;
-    const channel = (_a = req.query.channel) === null || _a === void 0 ? void 0 : _a.trim();
+router.get("/search", auth_1.requireUser, (0, asyncHandler_1.default)(async (req, res) => {
+    const channel = req.query.channel?.trim();
     if (!channel)
         return res.status(400).json({ error: "Missing channel" });
     // Step 1: Search channel

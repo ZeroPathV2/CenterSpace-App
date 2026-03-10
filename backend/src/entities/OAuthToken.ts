@@ -13,6 +13,9 @@ export class OAuthToken {
   @Column({ nullable: true })
   refreshToken?: string;
 
+  @Column({ type: "timestamp", nullable: true })
+  expiresAt?: Date;
+
   @Column({ type: "enum", enum: OAuthProvider })
   provider!: OAuthProvider;
 

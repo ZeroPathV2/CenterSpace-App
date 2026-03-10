@@ -1,13 +1,13 @@
-import { Request, Response, Router } from "express";
+import { Response, Router } from "express";
 import { AppDataSource } from "../ormconfig";
 import { PlaylistItem } from "../entities/PlaylistItem";
-import { requireUser } from "../middleware/requireUser";
+import { AuthRequest, requireUser } from "../middleware/auth";
 import asyncHandler from "../utils/asyncHandler";
 
 const router = Router()
 
-router.post("/", requireUser, asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.session.userId;
+router.post("/", requireUser, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.user!.id;
   const { platform, playlistItemId, title, embedUrl } = req.body;
 
   const repo = AppDataSource.getRepository(PlaylistItem);
@@ -31,8 +31,8 @@ router.post("/", requireUser, asyncHandler(async (req: Request, res: Response) =
   res.json(item);
 }))
 
-router.get("/", requireUser, asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.session.userId;
+router.get("/", requireUser, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.user!.id;
 
   const repo = AppDataSource.getRepository(PlaylistItem);
 
@@ -45,7 +45,7 @@ router.get("/", requireUser, asyncHandler(async (req: Request, res: Response) =>
 }))
 
 // CHANGE - what are "transactional updates"
-router.put("/reorder", requireUser, asyncHandler(async (req: Request, res: Response)=>{
+router.put("/reorder", requireUser, asyncHandler(async (req: AuthRequest, res: Response)=>{
   const { items } = req.body;
 
   const repo = AppDataSource.getRepository(PlaylistItem)
@@ -61,8 +61,8 @@ router.put("/reorder", requireUser, asyncHandler(async (req: Request, res: Respo
 }));
 
 // DELETE SINGLE VIA ID /playlist/:id
-router.delete("/:id", requireUser, asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.session.userId;
+router.delete("/:id", requireUser, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.user!.id;
   const itemId = Number(req.params.id);
 
   const repo = AppDataSource.getRepository(PlaylistItem);
@@ -77,8 +77,8 @@ router.delete("/:id", requireUser, asyncHandler(async (req: Request, res: Respon
 }))
 
 // CLEAR ALL
-router.delete("/", requireUser, asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.session.userId;
+router.delete("/", requireUser, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.user!.id;
 
   const repo = AppDataSource.getRepository(PlaylistItem);
 

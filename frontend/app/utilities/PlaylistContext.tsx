@@ -1,12 +1,14 @@
 "use client";
-import { createContext, useContext, useState, useEffect } from "react";
+
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useUser } from "./UserContext";
 
 interface Video {
   platform: string;
   playlistItemId: string;
   title: string;
   embedUrl: string;
-  id: number; // optional for DB items
+  id: number;
 }
 
 interface PlaylistContextType {
@@ -14,66 +16,97 @@ interface PlaylistContextType {
   addVideo: (video: Video) => void;
   removeVideo: (id: number) => void;
   clearPlaylist: () => void;
+  reloadPlaylist: () => void;
 }
 
 const PlaylistContext = createContext<PlaylistContextType | null>(null);
 
 export const PlaylistProvider = ({ children }: { children: React.ReactNode }) => {
-  const [playlist, setPlaylist] = useState<Video[]>([]);
+  const { user } = useUser();
+  const [playlist, setPlaylist] = useState<Video[]>([])
 
-  // Load playlist when user logs in / page refresh
+  const reloadPlaylist = useCallback(async () => {
+    if (!user) {
+      setPlaylist([]); // clear on logout
+      return;
+    }
+    try {
+      const res = await fetch("http://localhost:4000/playlist", {
+        credentials: "include",
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("Failed to fetch playlist");
+
+      const data = await res.json();
+
+      // Ensure it’s an array for this user
+      setPlaylist(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error loading playlist:", err);
+      setPlaylist([]);
+    }
+  }, [user]);
+
+  // Reload playlist whenever the user changes
   useEffect(() => {
-    fetch("http://localhost:4000/playlist", {
-      credentials: "include",
-    })
-      .then(res => res.json())
-      .then(data => setPlaylist(data ?? []))
-      .catch(() => {});
-  }, []);
+    reloadPlaylist()
+  },[user, reloadPlaylist]);
 
   const addVideo = async (video: Video) => {
-    const res = await fetch("http://localhost:4000/playlist", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(video),
-    });
+    if (!user) return;
+    try {
+      const res = await fetch("http://localhost:4000/playlist", {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(video),
+      });
 
-    if(!res.ok){
-      const text = await res.text()
-      console.error("Failed to add video.",text);
+      // setUser(null)
+      if (!res.ok) throw new Error(await res.text());
 
+      const saved = await res.json();
+      setPlaylist(prev => {
+        const exists = prev.some(v => v.playlistItemId === saved.playlistItemId && v.platform === saved.platform);
+        if (exists) return prev;
+        return [...prev, saved];
+      });
+    } catch (err) {
+      console.error("Error adding video:", err);
     }
-
-    const saved = await res.json();
-
-    setPlaylist(prev => {
-      const exists = prev.some(v => v.playlistItemId === saved.playlistItemId && v.platform === saved.platform);
-      if (exists) return prev;
-      return [...prev, saved];
-    });
   };
 
   const clearPlaylist = async () => {
-    await fetch("http://localhost:4000/playlist", {
-      method: "DELETE",
-      credentials: "include",
-    });
-
-    setPlaylist([]);
+    if (!user) return;
+    try {
+      await fetch("http://localhost:4000/playlist", {
+        method: "DELETE",
+        credentials: "include",
+      });
+      setPlaylist([]);
+    } catch (err) {
+      console.error("Error clearing playlist:", err);
+    }
   };
 
   const removeVideo = async (id: number) => {
-  await fetch(`http://localhost:4000/playlist/${id}`, {
-    method: "DELETE",
-    credentials: "include",
-  });
-
-  setPlaylist(prev => prev.filter(video => video.id !== id));
-};
+    if (!user) return;
+    try {
+      await fetch(`http://localhost:4000/playlist/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      setPlaylist(prev => prev.filter(video => video.id !== id));
+    } catch (err) {
+      console.error("Error removing video:", err);
+    }
+  };
 
   return (
-    <PlaylistContext.Provider value={{ playlist, addVideo, removeVideo, clearPlaylist }}>
+    <PlaylistContext.Provider
+      value={{ playlist, addVideo, removeVideo, clearPlaylist, reloadPlaylist }}
+    >
       {children}
     </PlaylistContext.Provider>
   );

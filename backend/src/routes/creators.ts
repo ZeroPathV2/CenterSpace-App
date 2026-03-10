@@ -1,5 +1,5 @@
-import { Request, Response, Router } from "express";
-import { requireUser } from "../middleware/requireUser";
+import { Response, Router } from "express";
+import { AuthRequest, requireUser } from "../middleware/auth"
 import asyncHandler from "../utils/asyncHandler";
 import { AppDataSource } from "../ormconfig";
 import { Creator } from "../entities/Creator";
@@ -7,7 +7,7 @@ import { Creator } from "../entities/Creator";
 const router = Router()
 const creatorRepo = AppDataSource.getRepository(Creator)
 
-router.post("/", requireUser, asyncHandler(async (req: Request, res: Response)=>{
+router.post("/", requireUser, asyncHandler(async (req: AuthRequest, res: Response)=>{
   const { platform, playlistItemId, name } = req.body;
   
   const creator = creatorRepo.create({
@@ -21,7 +21,7 @@ router.post("/", requireUser, asyncHandler(async (req: Request, res: Response)=>
   res.json(creator);
 }));
 
-router.get("/", requireUser, asyncHandler(async (req: Request, res: Response)=>{
+router.get("/", requireUser, asyncHandler(async (req: AuthRequest, res: Response)=>{
   const creators = await creatorRepo.find();
   res.json(creators);
 }));

@@ -1,5 +1,5 @@
 // "use state"
-import Header from "./components/navBar/NavBar";
+import Header from "./components/navigation/NavBar";
 import SocialLayout from "./components/socialLayout/SocialLayout";
 
 // "use client"

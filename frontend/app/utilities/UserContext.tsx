@@ -10,13 +10,13 @@ type User = {
 type UserContextType = {
   user: User | null;
   loading: boolean;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
   refreshUser: () => Promise<void>;
 };
 
 const UserContext = createContext<UserContextType | null>(null);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -30,9 +30,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
       } else {
         const data = await res.json();
-        setUser(data.user);
-      }
 
+        setUser({
+          id: data.userId,
+          email: data.email,
+        });
+      }
     } catch {
       setUser(null);
     }
@@ -41,31 +44,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-
     const loadUser = async () => {
+      await fetchUser()
+      setLoading(false)
+    }
 
-        const res = await fetch("http://localhost:4000/auth/me", {
-        credentials: "include",
-        });
-
-        if (!res.ok) return;
-
-        const data = await res.json();
-
-        setUser(data.user);
-
-    };
-
-    loadUser();
-
-    }, []);
+    loadUser()
+  }, []);
 
   return (
     <UserContext.Provider
       value={{
         user,
         loading,
-        refreshUser: fetchUser
+        setUser,
+        refreshUser: fetchUser,
       }}
     >
       {children}

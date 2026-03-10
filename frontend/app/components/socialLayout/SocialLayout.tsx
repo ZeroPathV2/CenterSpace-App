@@ -1,15 +1,35 @@
 "use client"
 import { usePlaylist } from '@/app/utilities/PlaylistContext';
+import IconBar from '../navigation/IconBar';
 
 const SocialLayout = () => {
   const {playlist, removeVideo, clearPlaylist} =  usePlaylist()
 
+  // console.log("playlist:",playlist.[0]);
+  // const twitchConnect = async () => {
+  //   fetch('http://localhost:4000/twitch/connect', {
+  //     method: 'GET',
+  //     credentials: 'include', // <-- send cookies
+  //   })
+  //   .then(res => res.json())
+  //   .catch(console.error)
+  // }
+  
+
   return (
     <div className='bg-linear-to-b from-purple-200 via-black to-purple-900 flex flex-col p-2 gap-2 w-full h-1/2 overflow-x-auto overscroll-x-none rounded '>
+      <div className='bg-red-500'>
+        <IconBar />
+      </div>
       <div className='bg-stone-900 flex justify-center items-center'>                                 {/* CHANGE MAKE URL .env var */}
-        <button className='bg-white text-red-600 p-1 rounded' onClick={() => window.location.href = "http://localhost:4000/twitch/connect"}>
-          Connect to Twitch
-        </button>
+        {/* <a href="http://localhost:4000/twitch/connect"> */}
+          <button 
+            className='bg-white text-red-600 p-1 rounded'
+            onClick={() => window.location.href = "http://localhost:4000/twitch/connect"}
+          >
+            Connect to Twitch
+          </button>
+        {/* </a> */}
       </div>
 
         {/* Video Playlist Section */}

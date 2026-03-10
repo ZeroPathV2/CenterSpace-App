@@ -1,5 +1,5 @@
-import { Request, Response, Router } from "express";
-import { requireUser } from "../middleware/requireUser";
+import { Response, Router } from "express";
+import { AuthRequest, requireUser } from "../middleware/auth";
 import asyncHandler from "../utils/asyncHandler";
 
 const router = Router();
@@ -7,7 +7,7 @@ const router = Router();
 const { YOUTUBE_API_KEY } = process.env;
 if (!YOUTUBE_API_KEY) throw new Error("Missing YOUTUBE_API_KEY");
 
-router.get("/search", requireUser, asyncHandler(async (req: Request, res: Response) => {
+router.get("/search", requireUser, asyncHandler(async (req: AuthRequest, res: Response) => {
     const channel = (req.query.channel as string)?.trim();
     if (!channel) return res.status(400).json({ error: "Missing channel" });
 

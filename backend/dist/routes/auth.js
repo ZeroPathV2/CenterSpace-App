@@ -7,26 +7,36 @@ const express_1 = require("express");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const ormconfig_1 = require("../ormconfig");
 const User_1 = require("../entities/User");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
+if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET must be set in .env");
+}
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN;
 // REGISTER
 router.post("/register", async (req, res) => {
     try {
-        let { email, password } = req.body;
+        const { email, password } = req.body;
         if (!email || !password)
             return res.status(400).json({ error: "Missing fields" });
-        email = email.trim();
         const userRepo = ormconfig_1.AppDataSource.getRepository(User_1.User);
         const existingUser = await userRepo.findOne({ where: { email } });
         if (existingUser)
             return res.status(400).json({ error: "User already exists" });
-        const hashedPassword = await bcrypt_1.default.hash(password, 10);
-        const newUser = userRepo.create({
-            email,
-            password: hashedPassword,
-        });
+        const hashed = await bcrypt_1.default.hash(password, 10);
+        const newUser = userRepo.create({ email, password: hashed });
         await userRepo.save(newUser);
-        req.session.userId = newUser.id;
-        res.json({ message: "User registered", userId: newUser.id });
+        const token = jsonwebtoken_1.default.sign({ userId: newUser.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+        // HTTP-only cookie
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 1000 * 60 * 60 * 3 // 3h
+        });
+        res.json({ message: "User registered" });
     }
     catch (error) {
         console.error("Register error:", error);
@@ -44,8 +54,14 @@ router.post("/login", async (req, res) => {
         const valid = await bcrypt_1.default.compare(password, user.password);
         if (!valid)
             return res.status(400).json({ error: "Invalid credentials" });
-        req.session.userId = user.id;
-        res.json({ message: "Logged in", userId: user.id });
+        const token = jsonwebtoken_1.default.sign({ userId: user.id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 1000 * 60 * 60 * 3 // 3h
+        });
+        res.json({ message: "Logged in" });
     }
     catch (error) {
         console.error("Login error:", error);
@@ -54,19 +70,19 @@ router.post("/login", async (req, res) => {
 });
 // LOGOUT
 router.post("/logout", (req, res) => {
-    req.session.destroy(() => {
-        res.clearCookie("connect.sid");
-        res.json({ message: "Logged out" });
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
     });
+    res.json({ message: "Logged out" });
 });
 // CHECK SESSION
-router.get("/me", async (req, res) => {
-    if (!req.session.userId)
-        return res.status(401).json({ error: "Not logged in" });
+router.get("/me", auth_1.requireUser, async (req, res) => {
     const userRepo = ormconfig_1.AppDataSource.getRepository(User_1.User);
-    const user = await userRepo.findOne({
-        where: { id: req.session.userId },
-    });
-    res.json({ user });
+    const user = await userRepo.findOne({ where: { id: req.user.id } });
+    if (!user)
+        return res.status(404).json({ error: "User not found" });
+    res.json({ userId: user.id, email: user.email });
 });
 exports.default = router;
