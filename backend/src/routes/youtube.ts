@@ -11,7 +11,6 @@ router.get("/search", requireUser, asyncHandler(async (req: AuthRequest, res: Re
     const channel = (req.query.channel as string)?.trim();
     if (!channel) return res.status(400).json({ error: "Missing channel" });
 
-    // Step 1: Search channel
     const searchRes = await fetch(
       `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${encodeURIComponent(
         channel
@@ -30,7 +29,6 @@ router.get("/search", requireUser, asyncHandler(async (req: AuthRequest, res: Re
 
     const channelId = searchData.items[0].snippet.channelId;
 
-    // Step 2: Get uploads playlist
     const channelRes = await fetch(
       `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${channelId}&key=${YOUTUBE_API_KEY}`
     )
@@ -52,6 +50,7 @@ router.get("/search", requireUser, asyncHandler(async (req: AuthRequest, res: Re
       videos: [
         {
           platform: "youtube",
+          channel: channel,
           playlistItemId: uploadsPlaylistId,
           title: `${channel} uploads`,
           embedUrl: `https://www.youtube.com/embed/videoseries?list=${uploadsPlaylistId}&index=0`,
@@ -59,5 +58,36 @@ router.get("/search", requireUser, asyncHandler(async (req: AuthRequest, res: Re
       ]
     })
 }))
+
+router.get("/live", requireUser, asyncHandler(async (req: AuthRequest, res: Response) => {
+  const uploadsPlaylistId = req.query.playlistId as string;
+  if (!uploadsPlaylistId) return res.status(400).json({ error: "Missing playlistId" });
+
+  const playlistRes = await fetch(
+    `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=1&key=${YOUTUBE_API_KEY}`
+  );
+
+  const playlistData = await playlistRes.json();
+  const videoId = playlistData.items?.[0]?.snippet?.resourceId?.videoId;
+
+  if (!videoId) {
+    return res.json({ isLive: false });
+  }
+
+  const videoRes = await fetch(
+    `https://www.googleapis.com/youtube/v3/videos?part=snippet,liveStreamingDetails&id=${videoId}&key=${YOUTUBE_API_KEY}`
+  );
+
+  const videoData = await videoRes.json();
+  const video = videoData.items?.[0];
+
+  const isLive = video?.snippet?.liveBroadcastContent === "live";
+
+  const embedUrl = isLive
+    ? `https://www.youtube.com/embed/${videoId}?autoplay=1`
+    : null;
+
+  res.json({ isLive, embedUrl });
+}));
 
 export default router;

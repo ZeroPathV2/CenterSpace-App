@@ -5,8 +5,8 @@ import { useUser } from "./UserContext";
 
 interface Video {
   platform: string;
+  channel: string;
   playlistItemId: string;
-  title: string;
   embedUrl: string;
   id: number;
 }
@@ -17,6 +17,7 @@ interface PlaylistContextType {
   removeVideo: (id: number) => void;
   clearPlaylist: () => void;
   reloadPlaylist: () => void;
+  updateVideo: (id: number, channel: string, embedUrl: string, playlistItemId: string, platform: string) => void;
 }
 
 const PlaylistContext = createContext<PlaylistContextType | null>(null);
@@ -25,9 +26,40 @@ export const PlaylistProvider = ({ children }: { children: React.ReactNode }) =>
   const { user } = useUser();
   const [playlist, setPlaylist] = useState<Video[]>([])
 
+  const updateVideoInDb = async (id: number, playlistItemId: string, embedUrl: string, channel: string) => {
+  try {
+    const res = await fetch(`http://localhost:4000/playlist/${id}`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playlistItemId, embedUrl, channel }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Failed to update video: ${errText}`);
+    }
+
+    const updated = await res.json();
+    setPlaylist(prev =>
+      prev.map(v => (v.id === id ? { ...v, playlistItemId, embedUrl, channel } : v))
+    );
+  } catch (err) {
+    console.error("Error updating video in DB:", err);
+  }
+};
+
+  const updateVideo = (id: number, channel: string, embedUrl: string, playlistItemId: string, platform: string) => {
+  setPlaylist(prev =>
+    prev.map(v => (v.id === id ? { ...v, embedUrl, playlistItemId, channel, platform } : v))
+  );
+
+  updateVideoInDb(id, playlistItemId, embedUrl, channel);
+};
+
   const reloadPlaylist = useCallback(async () => {
     if (!user) {
-      setPlaylist([]); // clear on logout
+      setPlaylist([]);
       return;
     }
     try {
@@ -39,7 +71,6 @@ export const PlaylistProvider = ({ children }: { children: React.ReactNode }) =>
 
       const data = await res.json();
 
-      // Ensure it’s an array for this user
       setPlaylist(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error loading playlist:", err);
@@ -47,7 +78,6 @@ export const PlaylistProvider = ({ children }: { children: React.ReactNode }) =>
     }
   }, [user]);
 
-  // Reload playlist whenever the user changes
   useEffect(() => {
     reloadPlaylist()
   },[user, reloadPlaylist]);
@@ -63,7 +93,6 @@ export const PlaylistProvider = ({ children }: { children: React.ReactNode }) =>
         body: JSON.stringify(video),
       });
 
-      // setUser(null)
       if (!res.ok) throw new Error(await res.text());
 
       const saved = await res.json();
@@ -105,7 +134,7 @@ export const PlaylistProvider = ({ children }: { children: React.ReactNode }) =>
 
   return (
     <PlaylistContext.Provider
-      value={{ playlist, addVideo, removeVideo, clearPlaylist, reloadPlaylist }}
+      value={{ playlist, addVideo, removeVideo, clearPlaylist, reloadPlaylist, updateVideo }}
     >
       {children}
     </PlaylistContext.Provider>

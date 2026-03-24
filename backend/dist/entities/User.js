@@ -13,7 +13,7 @@ exports.User = void 0;
 const typeorm_1 = require("typeorm");
 const OAuthToken_1 = require("./OAuthToken");
 const PlaylistItem_1 = require("./PlaylistItem");
-const Creator_1 = require("./Creator");
+const Favourite_1 = require("./Favourite");
 let User = class User {
 };
 exports.User = User;
@@ -34,13 +34,13 @@ __decorate([
     __metadata("design:type", Array)
 ], User.prototype, "tokens", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => PlaylistItem_1.PlaylistItem, item => item.user),
+    (0, typeorm_1.OneToMany)(() => PlaylistItem_1.PlaylistItem, (item) => item.user),
     __metadata("design:type", Array)
 ], User.prototype, "playlist", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => Creator_1.Creator, creator => creator.user),
+    (0, typeorm_1.OneToMany)(() => Favourite_1.Favourite, (fav) => fav.user),
     __metadata("design:type", Array)
-], User.prototype, "creators", void 0);
+], User.prototype, "favourites", void 0);
 exports.User = User = __decorate([
     (0, typeorm_1.Entity)()
 ], User);

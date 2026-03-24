@@ -19,7 +19,9 @@ import creatorsRoute from './routes/creators'
 import cors from "cors"
 import { RedisStore } from "connect-redis";
 import { connectRedis } from "./redis";
-import { startLiveChecker } from "./workers/liveChecker";
+// import { startLiveChecker } from "./workers/liveChecker";
+
+import dvlaRouter from "./routes/lookup"
 
 const app = express();
 
@@ -37,6 +39,8 @@ app.use("/youtube", youtubeRouter)
 app.use("/playlist", playlistRoute)
 app.use("/creators", creatorsRoute)
 
+app.use("/lookup", dvlaRouter)
+
 app.get("/", (_req, res) => {
     res.send(`Backend is running.`)
 })
@@ -48,6 +52,7 @@ app.use((err: any, req: any, res: any, next: any) => {
   });
 });
 
+
 const PORT = process.env.PORT || 4000;
 
 async function startServer() {
@@ -56,7 +61,7 @@ async function startServer() {
     await AppDataSource.initialize()
         console.log("Database connected");
         
-        startLiveChecker()
+        // startLiveChecker()
 
         app.listen(PORT, () => console.log(`Server running on ${PORT}`));
   }

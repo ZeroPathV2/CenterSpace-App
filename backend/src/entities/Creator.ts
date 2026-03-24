@@ -1,21 +1,20 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { User } from "./User";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import { PlatformAccount } from "./PlatformAccount";
+import { Favourite } from "./Favourite";
 
 @Entity()
 export class Creator {
 
   @PrimaryGeneratedColumn()
-  id!: number
+  id!: number;
 
   @Column()
-  platform!: string
+  name!: string;
 
-  @Column()
-  playlistItemId!: string
+  @OneToMany(() => PlatformAccount, (account) => account.creator)
+  platformAccounts!: PlatformAccount[];
 
-  @Column()
-  name!: string
+  @OneToMany(() => Favourite, (fav) => fav.creator)
+  favourites!: Favourite[];
 
-  @ManyToOne(() => User, user => user.creators, { onDelete: "CASCADE" })
-  user!: User
 }

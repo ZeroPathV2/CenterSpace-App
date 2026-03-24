@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { PlaylistProvider } from "./utilities/PlaylistContext";
 import { UserProvider } from "./utilities/UserContext";
+import { LiveProvider } from "./utilities/LiveContext";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -18,8 +19,10 @@ export default function RootLayout({
       <body className=''>
         <UserProvider>
           <PlaylistProvider>
+            <LiveProvider>
               {children}
 
+            </LiveProvider>
           </PlaylistProvider>
         </UserProvider>
       </body>

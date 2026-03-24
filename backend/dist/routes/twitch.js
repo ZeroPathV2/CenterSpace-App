@@ -84,45 +84,21 @@ router.get("/callback", (0, asyncHandler_1.default)(async (req, res) => {
     }
     res.redirect(`http://${process.env.FRONTEND_HOST}:${process.env.FRONTEND_PORT}`);
 }));
+// GET VODs or Live stream with optional index
 router.get("/search", auth_1.requireUser, (0, asyncHandler_1.default)(async (req, res) => {
     const userId = req.user?.id;
     const channel = req.query.channel?.trim();
-    if (!channel) {
+    const index = req.query.index !== undefined ? Number(req.query.index) : 0;
+    if (!channel)
         return res.status(400).json({ error: "Missing channel" });
-    }
-    let tokenRecord = await tokenRepo.findOne({
-        where: {
-            user: { id: userId },
-            provider: OAuthProvider_1.OAuthProvider.TWITCH,
-        },
+    const tokenRepo = ormconfig_1.AppDataSource.getRepository(OAuthToken_1.OAuthToken);
+    const tokenRecord = await tokenRepo.findOne({
+        where: { user: { id: userId }, provider: OAuthProvider_1.OAuthProvider.TWITCH },
     });
-    if (!tokenRecord) {
+    if (!tokenRecord)
         return res.status(401).json({ error: "Not authenticated with Twitch" });
-    }
-    // REFRESH EXPIRED TOKEN
-    if (tokenRecord.expiresAt && tokenRecord.expiresAt <= new Date()) {
-        const refreshRes = await fetch("https://id.twitch.tv/oauth2/token", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({
-                grant_type: "refresh_token",
-                refresh_token: tokenRecord.refreshToken,
-                client_id: process.env.TWITCH_CLIENT_ID,
-                client_secret: process.env.TWITCH_CLIENT_SECRET,
-            }),
-        });
-        const refreshData = await refreshRes.json();
-        if (!refreshData.access_token) {
-            throw new Error("Failed to refresh token");
-        }
-        tokenRecord.accessToken = refreshData.access_token;
-        tokenRecord.refreshToken =
-            refreshData.refresh_token ?? tokenRecord.refreshToken;
-        tokenRecord.expiresAt = new Date(Date.now() + refreshData.expires_in * 1000);
-        await tokenRepo.save(tokenRecord);
-    }
     const token = tokenRecord.accessToken;
-    // GET TWITCH USER
+    // Get Twitch user
     const userRes = await fetch(`https://api.twitch.tv/helix/users?login=${channel}`, {
         headers: {
             Authorization: `Bearer ${token}`,
@@ -130,52 +106,116 @@ router.get("/search", auth_1.requireUser, (0, asyncHandler_1.default)(async (req
         },
     });
     const userData = await userRes.json();
-    const user = userData.data?.[0];
-    if (!user) {
+    const userObj = userData.data?.[0];
+    if (!userObj)
         return res.status(404).json({ error: "Channel not found" });
-    }
-    // CHECK IF LIVE
-    const streamRes = await fetch(`https://api.twitch.tv/helix/streams?user_id=${user.id}`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Client-Id": process.env.TWITCH_CLIENT_ID,
-        },
+    // Check live
+    const streamRes = await fetch(`https://api.twitch.tv/helix/streams?user_id=${userObj.id}`, {
+        headers: { Authorization: `Bearer ${token}`, "Client-Id": process.env.TWITCH_CLIENT_ID },
     });
     const streamData = await streamRes.json();
     const stream = streamData.data?.[0];
+    //  type = 'live'?
     if (stream) {
         return res.json({
-            videos: [
-                {
+            videos: [{
                     platform: "twitch",
-                    playlistItemId: stream.id,
+                    channel: stream.user_login,
                     title: stream.title,
-                    embedUrl: `https://player.twitch.tv/?channel=${channel}&${parentParam}`,
-                },
-            ],
+                    playlistItemId: stream.id,
+                    embedUrl: `https://player.twitch.tv/?channel=${stream.user_login}&parent=localhost&autoplay=false`,
+                }],
         });
     }
-    // GET LATEST VOD
-    const vodRes = await fetch(`https://api.twitch.tv/helix/videos?user_id=${user.id}&first=1`, {
+    // Get latest VODs
+    const vodRes = await fetch(`https://api.twitch.tv/helix/videos?user_id=${userObj.id}&first=20`, {
+        headers: { Authorization: `Bearer ${token}`, "Client-Id": process.env.TWITCH_CLIENT_ID },
+    });
+    const vodData = await vodRes.json();
+    const vods = vodData.data || [];
+    const vid = vods[Math.min(index, vods.length - 1)];
+    if (!vid)
+        return res.status(404).json({ error: "No videos found" });
+    res.json({
+        videos: [{
+                platform: "twitch",
+                channel: vid.user_login,
+                title: vid.title,
+                playlistItemId: vid.id,
+                embedUrl: `https://player.twitch.tv/?video=${vid.id}&parent=localhost&autoplay=false`,
+            }],
+    });
+}));
+router.get("/live", auth_1.requireUser, (0, asyncHandler_1.default)(async (req, res) => {
+    const channel = req.query.channel;
+    if (!channel)
+        return res.status(400).json({ error: "Missing channel" });
+    // Fetch Twitch token
+    const tokenRepo = ormconfig_1.AppDataSource.getRepository(OAuthToken_1.OAuthToken);
+    const tokenRecord = await tokenRepo.findOne({
+        where: { user: { id: req.user.id }, provider: OAuthProvider_1.OAuthProvider.TWITCH },
+    });
+    if (!tokenRecord)
+        return res.status(401).json({ error: "Not authenticated with Twitch" });
+    const twitchRes = await fetch(`https://api.twitch.tv/helix/streams?user_login=${channel}`, {
         headers: {
-            Authorization: `Bearer ${token}`,
+            "Authorization": `Bearer ${tokenRecord.accessToken}`,
             "Client-Id": process.env.TWITCH_CLIENT_ID,
         },
     });
-    const vodData = await vodRes.json();
-    const vod = vodData.data?.[0];
-    if (!vod) {
-        return res.status(404).json({ error: "No videos found" });
+    if (!twitchRes.ok)
+        throw new Error("Is Live Response Failed");
+    const data = await twitchRes.json();
+    const video = data.data?.[0]; // optional chaining, safe even if array is empty
+    console.log("Video:", video);
+    const isLive = video?.type === "live"; // safe: undefined => false
+    if (!isLive) {
+        return res.status(200).json({ channel, isLive: false, embedUrl: null });
     }
-    return res.json({
-        videos: [
-            {
-                platform: "twitch",
-                playlistItemId: vod.id,
-                title: vod.title,
-                embedUrl: `https://player.twitch.tv/?video=${vod.id}&${parentParam}`,
-            },
-        ],
-    });
+    const embedUrl = `https://player.twitch.tv/?channel=${video.user_login}&parent=localhost&autoplay=false`;
+    res.json({ channel, isLive, embedUrl });
 }));
+// Twitch Feilds
+//   id: '2720939962',
+//   stream_id: '317050215511',
+//   user_id: '88946548',
+//   user_login: 'aceu',
+//   user_name: 'aceu',
+//   title: 'PICK UP THE PACE PICK UP THE PACE',
+//   description: '',
+//   created_at: '2026-03-13T02:30:19Z',
+//   published_at: '2026-03-13T02:30:19Z',
+//   url: 'https://www.twitch.tv/videos/2720939962',
+//   thumbnail_url: 'https://static-cdn.jtvnw.net/cf_vods/d2nvs31859zcd8/c620cdf1d38720670137_aceu_317050215511_1773369014//thumb/thumb0-%{width}x%{height}.jpg',
+//   viewable: 'public',
+//   view_count: 86560,
+//   language: 'en',
+//   type: 'archive',
+//   duration: '8h10m0s',
+//   muted_segments: null
+// OR
+// id: '316486277607',
+//   user_id: '131851325',
+//   user_login: 'knightmar3frame',
+//   user_name: 'knightmar3frame',
+//   game_id: '66170',
+//   game_name: 'Warframe',
+//   type: 'live',
+//   title: '!wpnuke !gara⚡️new week, i play game, you watch?',
+//   viewer_count: 114,
+//   started_at: '2026-03-16T11:28:22Z',
+//   language: 'en',
+//   thumbnail_url: 'https://static-cdn.jtvnw.net/previews-ttv/live_user_knightmar3frame-{width}x{height}.jpg',
+//   tag_ids: [],
+//   tags: [
+//     'frame',
+//     'helping',
+//     'playingwithviewers',
+//     'READ',
+//     'NoBackseating',
+//     'knightmareframe',
+//     'English',
+//     'braincellsrequired'
+//   ],
+//   is_mature: true
 exports.default = router;

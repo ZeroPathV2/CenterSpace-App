@@ -9,29 +9,32 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Creator = void 0;
+exports.PlatformAccount = void 0;
 const typeorm_1 = require("typeorm");
-const PlatformAccount_1 = require("./PlatformAccount");
-const Favourite_1 = require("./Favourite");
-let Creator = class Creator {
+const Creator_1 = require("./Creator");
+let PlatformAccount = class PlatformAccount {
 };
-exports.Creator = Creator;
+exports.PlatformAccount = PlatformAccount;
 __decorate([
     (0, typeorm_1.PrimaryGeneratedColumn)(),
     __metadata("design:type", Number)
-], Creator.prototype, "id", void 0);
+], PlatformAccount.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.Column)(),
     __metadata("design:type", String)
-], Creator.prototype, "name", void 0);
+], PlatformAccount.prototype, "platform", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => PlatformAccount_1.PlatformAccount, (account) => account.creator),
-    __metadata("design:type", Array)
-], Creator.prototype, "platformAccounts", void 0);
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], PlatformAccount.prototype, "channel", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => Favourite_1.Favourite, (fav) => fav.creator),
-    __metadata("design:type", Array)
-], Creator.prototype, "favourites", void 0);
-exports.Creator = Creator = __decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], PlatformAccount.prototype, "platformId", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => Creator_1.Creator, (creator) => creator.platformAccounts),
+    __metadata("design:type", Creator_1.Creator)
+], PlatformAccount.prototype, "creator", void 0);
+exports.PlatformAccount = PlatformAccount = __decorate([
     (0, typeorm_1.Entity)()
-], Creator);
+], PlatformAccount);

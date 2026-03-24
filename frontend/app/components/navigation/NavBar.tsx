@@ -26,19 +26,19 @@ const Header = () => {
   }
 };
   return (
-    <div className='bg-stone-900 flex w-full p-2 justify-between items-center'>
+    <div className='bg-stone-950 flex w-full h-full justify-between items-center'>
       {/* Logo / Home Controlls*/}
-      <div>
+      <div className=''>
         Header
       </div>
 
       {/* Search / Navigation */}
-      <div>
+      <div className=' flex h-full justify-evenly items-center'>
         <SearchBar />
       </div>
 
       {/* User Account Controlls */}
-      <div>
+      <div className=''>
         <button onClick={logout} className='bg-white text-red-500'>Loggout</button>
       </div>
     </div>

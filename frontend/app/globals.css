@@ -24,3 +24,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@utility stone-panel {
+  @apply border border-stone-700;
+
+  box-shadow:
+    inset 0 3px 6px rgba(255,255,255,0.08),
+    inset 0 -3px 6px rgba(0,0,0,0.7),
+    0 10px 25px rgba(0,0,0,0.9);
+}

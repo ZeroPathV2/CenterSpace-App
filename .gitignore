@@ -1,2 +1,3 @@
 # Root .gitignore
 backend/.env
+**/lookup

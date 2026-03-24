@@ -13,9 +13,9 @@ export class PlaylistItem {
   @Column()
   playlistItemId!: string
 
-  @Column()
-  title!: string
-
+  @Column({ nullable: true })
+  channel?: string;
+  
   @Column()
   embedUrl!: string
 

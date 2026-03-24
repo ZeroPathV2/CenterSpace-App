@@ -1,10 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToMany, JoinTable } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
 import { OAuthToken } from "./OAuthToken";
 import { PlaylistItem } from "./PlaylistItem";
-import { Creator } from "./Creator";
+import { Favourite } from "./Favourite";
 
 @Entity()
 export class User {
+
   @PrimaryGeneratedColumn()
   id!: number;
 
@@ -12,14 +13,15 @@ export class User {
   email!: string;
 
   @Column()
-  password!: string
+  password!: string;
 
   @OneToMany(() => OAuthToken, (token) => token.user)
   tokens!: OAuthToken[];
 
-  @OneToMany(() => PlaylistItem, item => item.user)
-  playlist!: PlaylistItem[]
+  @OneToMany(() => PlaylistItem, (item) => item.user)
+  playlist!: PlaylistItem[];
 
-  @OneToMany(() => Creator, creator => creator.user)
-  creators!: Creator[];
+  @OneToMany(() => Favourite, (fav) => fav.user)
+  favourites!: Favourite[];
+
 }

@@ -17,7 +17,8 @@ const playlist_1 = __importDefault(require("./routes/playlist"));
 const creators_1 = __importDefault(require("./routes/creators"));
 const cors_1 = __importDefault(require("cors"));
 const redis_1 = require("./redis");
-const liveChecker_1 = require("./workers/liveChecker");
+// import { startLiveChecker } from "./workers/liveChecker";
+const lookup_1 = __importDefault(require("./routes/lookup"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
     origin: "http://localhost:3000",
@@ -30,6 +31,7 @@ app.use("/twitch", twitch_1.default);
 app.use("/youtube", youtube_1.default);
 app.use("/playlist", playlist_1.default);
 app.use("/creators", creators_1.default);
+app.use("/lookup", lookup_1.default);
 app.get("/", (_req, res) => {
     res.send(`Backend is running.`);
 });
@@ -45,7 +47,7 @@ async function startServer() {
         await (0, redis_1.connectRedis)();
         await ormconfig_1.AppDataSource.initialize();
         console.log("Database connected");
-        (0, liveChecker_1.startLiveChecker)();
+        // startLiveChecker()
         app.listen(PORT, () => console.log(`Server running on ${PORT}`));
     }
     catch (err) {
